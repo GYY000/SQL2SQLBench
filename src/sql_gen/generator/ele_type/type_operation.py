@@ -1,0 +1,210 @@
+# -*- coding: utf-8 -*-
+# @Project: SQL2SQL_Bench
+# @Module: type_operation$
+# @Author: 10379
+# @Time: 2025/3/24 19:59
+
+import os
+
+from sql_gen.generator.ele_type.type_def import *
+from utils.tools import get_proj_root_path, get_table_col_name, scale_name_into_length
+
+
+def gen_type_through_str(type_str, attr_container) -> BaseType:
+    if type_str == 'ANY_VALUE':
+        return AnyValueType(attr_container=attr_container)
+    elif type_str == 'INT':
+        return IntType(attr_container=attr_container)
+    elif type_str == 'STRING':
+        return StringGeneralType(attr_container=attr_container)
+    elif type_str == 'BOOL':
+        return BoolType(attr_container=attr_container)
+    elif type_str == 'ALIAS':
+        return AliasType(attr_container=attr_container)
+    elif type_str == 'ARRAY':
+        return ArrayType(attr_container=attr_container)
+    elif type_str == 'DATE':
+        return DateType(attr_container=attr_container)
+    elif type_str == 'TABLE':
+        return TableType(attr_container=attr_container)
+    elif type_str == 'TIMESTAMP':
+        return TimestampType(None, attr_container=attr_container)
+    elif type_str == 'INTERVAL':
+        return IntervalType(None, attr_container=attr_container)
+    elif type_str == 'POINT':
+        return PointType(attr_container=attr_container)
+    elif type_str == 'XML':
+        return XmlType(attr_container=attr_container)
+    elif type_str == 'DOUBLE':
+        return DoubleType(attr_container=attr_container)
+    elif type_str == 'JSON':
+        return JsonType(attr_container=attr_container)
+    elif type_str == 'NUMBER':
+        return NumberType(None, None, attr_container=attr_container)
+    elif type_str == 'NVARCHAR':
+        return NvarcharType(4000, attr_container=attr_container)
+    elif type_str == 'FLOAT':
+        return FloatGeneralType(None, None, attr_container=attr_container)
+    elif type_str == 'QUERY':
+        return QueryType(attr_container=attr_container)
+    elif type_str == 'INT_LITERAL':
+        return IntLiteralType(attr_container=attr_container)
+    elif type_str == 'STRING_LITERAL':
+        return StringLiteralType(attr_container=attr_container)
+    elif type_str == 'WORD_LITERAL':
+        return WordLiteralType(attr_container=attr_container)
+    elif type_str == 'FLOAT_LITERAL':
+        return FloatLiteralType(attr_container=attr_container)
+    elif type_str == 'ARRAY[STRING]':
+        return ArrayType(StringGeneralType(), attr_container=attr_container)
+    elif type_str == 'ORDER_BY_ELEMENT':
+        return OrderByElementType(attr_container=attr_container)
+    elif type_str == 'WINDOW_DEFINITION':
+        return WindowDefinitionType(attr_container=attr_container)
+    else:
+        raise ValueError(f"Type {type_str} does not exist in this system")
+
+
+def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str, table_name: str):
+    # col_name are used for build VARRAY Type for Oracle
+    type_name = type_def['type_name']
+    add_constraint = None
+    type_defs = []
+    if type_name == 'INT':
+        final_type = IntType()
+    elif type_name == 'BIGINT':
+        final_type = BigIntType()
+    elif type_name == 'BOOL':
+        final_type = BoolType()
+    elif type_name == 'DECIMAL':
+        final_type = DecimalType(type_def['precision'], type_def['scale'])
+    elif type_name == 'DOUBLE':
+        final_type = DoubleType()
+    elif type_name == 'DATE':
+        final_type = DateType()
+    elif type_name == 'TIME':
+        final_type = TimeType(type_def['fraction'])
+    elif type_name == 'YEAR':
+        final_type = YearType()
+    elif type_name == 'TIMESTAMP':
+        if 'fraction' in type_def:
+            final_type = TimestampType(type_def['fraction'])
+        else:
+            final_type = TimestampType()
+    elif type_name == 'DATETIME':
+        if 'fraction' in type_def:
+            final_type = DatetimeType(type_def['fraction'])
+        else:
+            final_type = DatetimeType()
+    elif type_name == 'INTERVAL YEAR TO MONTH':
+        final_type = IntervalYearMonthType()
+    elif type_name == 'FLOAT':
+        final_type = FloatType()
+    elif type_name == 'TIMESTAMPTZ':
+        if 'fraction' in type_def:
+            final_type = TimestampTZType(type_def['fraction'])
+        else:
+            final_type = TimestampTZType()
+    elif type_name == 'VARCHAR':
+        final_type = VarcharType(type_def['length'])
+    elif type_name == 'ENUM':
+        values = ''
+        for value in type_def['values']:
+            if values != '':
+                values = values + ', '
+            values = values + f"'{value}'"
+        final_type = EnumType(type_def['values'])
+        constraint_name = scale_name_into_length(f"{table_name}_{col_name}_check", 20)
+        if dialect == 'pg':
+            add_constraint = f"CONSTRAINT {constraint_name} CHECK({get_table_col_name(col_name, 'pg')} IN ({values}))"
+        elif dialect == 'oracle':
+            add_constraint = f"CONSTRAINT {constraint_name} CHECK({get_table_col_name(col_name, 'oracle')} IN ({values}))"
+    elif type_name == 'NVARCHAR':
+        final_type = NvarcharType(type_def['length'])
+    elif type_name == 'CHAR':
+        final_type = CharType(type_def['length'])
+    elif type_name == 'TEXT':
+        final_type = TextType()
+    elif type_name == 'UUID':
+        final_type = UuidType()
+    elif type_name == 'JSON':
+        final_type = JsonType(type_def['structure'])
+    elif type_name == 'JSONB':
+        final_type = JsonbType(type_def['structure'])
+    elif type_name == 'POINT':
+        final_type = PointType()
+    elif type_name == 'XML':
+        final_type = XmlType()
+    elif type_name == 'BLOB':
+        final_type = BlobType()
+    elif type_name == 'ARRAY':
+        ele_type, ele_constraint, ele_type_defs = load_col_type(type_def['ele_type'], 'sub' + col_name, dialect,
+                                                                db_name, table_name)
+        final_type = ArrayType(ele_type, col_name, type_def['length'])
+        type_defs = type_defs + ele_type_defs
+        if dialect == 'oracle':
+            type_def = (f"CREATE TYPE {scale_name_into_length(f'{col_name}_varray_type')} AS "
+                        f"VARRAY({type_def['length']}) OF {ele_type.get_type_name('oracle')};")
+            type_defs.append(type_def)
+    else:
+        print(type_name)
+        assert False
+    return final_type, add_constraint, type_defs
+
+
+def type_statistic():
+    types = {
+        "INT": 0,
+        "BOOL": 0,
+        "DECIMAL": 0,
+        "DOUBLE": 0,
+        "DATE": 0,
+        "TIME": 0,
+        "YEAR": 0,
+        "TIMESTAMP": 0,
+        "DATETIME": 0,
+        "INTERVAL YEAR TO MONTH": 0,
+        "TIMESTAMPTZ": 0,
+        "VARCHAR": 0,
+        "ENUM": 0,
+        "NVARCHAR": 0,
+        "CHAR": 0,
+        "TEXT": 0,
+        "UUID": 0,
+        "JSON": 0,
+        "JSONB": 0,
+        "POINT": 0,
+        "XML": 0,
+        "BLOB": 0,
+        "ARRAY": 0
+    }
+    table_cnt = 0
+    for file in os.listdir(os.path.join(get_proj_root_path(), 'data')):
+        db_root_path = os.path.join(get_proj_root_path(), 'data', file)
+        if os.path.exists(os.path.join(db_root_path, 'schema.json')):
+            with open(os.path.join(db_root_path, 'schema.json'), 'r') as f:
+                schema = json.load(f)
+            table_cnt += len(schema)
+            for table, value in schema.items():
+                for col in value['cols']:
+                    col_type = col['type']['type_name']
+                    types[col_type] = types[col_type] + 1
+    for type_name in types:
+        print(f"{type_name}: {types[type_name]}")
+    cnt = 0
+    for key, value in types.items():
+        cnt += value
+    print(cnt)
+    print(table_cnt)
+
+
+def build_value(built_in_type: BaseType, value, dialect: str) -> str | None:
+    if built_in_type is None:
+        return None
+    if built_in_type.get_type_name(dialect) is None:
+        return None
+    if value is None:
+        return 'NULL'
+    if isinstance(value, str):
+        value = value.replace("'", "''")
+    return built_in_type.gen_value(dialect, value)
