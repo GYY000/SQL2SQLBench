@@ -168,6 +168,7 @@ verify_sql(sql, sql2, None, database_id, database_param, dialect, tables, order_
   - `antlr_parser`: The antlr parser and their syntax definition file used by *SQL2SQLBench*.
   - `db_builder`: The building script of the database employed in the *SQL2SQLBench*.
   - `sql_gen`: The generator of *SQL2SQLBench*.
+  - `point_gen`: The generator of translation points.
   - `transpiler`: The running script of each dialect translator tested in the *SQL2SQLBench*.
   - `verification`: The verifier offered by *SQL2SQLBench*.
   - `config.ini`: The configuration file for *SQL2SQL_Bench*.
