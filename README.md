@@ -5,7 +5,7 @@ SQL2SQLBench is a benchmark to test SQL dialect translators, and it is generally
 ## System Overview
 
 <p align="center">
-    <img src="figures/system-overview.svg" width="1000px">
+    <img src="figures/overview.png" width="1000px">
 </p>
 
 
