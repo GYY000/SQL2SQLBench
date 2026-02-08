@@ -45,20 +45,16 @@ def load_config(config_file=None):
     return {
         'dbg': config.getboolean("MODE", 'dbg'),
         'cloud_mode': config.getboolean("MODE", 'cloud_mode'),
-        "gpt_api_base": config.get("API", 'gpt_api_base'),
-        "gpt_api_key": config.get("API", 'gpt_api_key'),
-        "moonshot_api_base": config.get("API", 'moonshot_api_base'),
-        "moonshot_api_key": config.get("API", 'moonshot_api_key'),
-        "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
+        "qwen3_coder_id": config.get("API", 'qwen3_coder_id'),
+        "qwen3_coder_api_base": config.get("API", 'qwen3_coder_api_base'),
+        "qwen3_id": config.get("API", 'qwen3_id'),
         "qwen3_api_base": config.get("API", 'qwen3_api_base'),
-        "volcano_api_base": config.get("API", 'volcano_api_base'),
-        "volcano_api_key": config.get("API", 'volcano_api_key'),
-        "bailian_api_base": config.get("API", 'bailian_api_base'),
-        "bailian_api_key": config.get("API", 'bailian_api_key'),
-        "deepseek_api_base": config.get("API", 'deepseek_api_base'),
-        "deepseek_api_key": config.get("API", 'deepseek_api_key'),
-        "paratera_api_base": config.get("API", 'paratera_api_base'),
-        "paratera_api_key": config.get("API", 'paratera_api_key')
+        "deepseek_v3_api_base": config.get("API", 'deepseek_v3_api_base'),
+        "deepseek_v3_api_key": config.get("API", 'deepseek_v3_api_key'),
+        "deepseek_v3_version": config.get("API", 'deepseek_v3_version'),
+        "deepseek_r1_api_base": config.get("API", 'deepseek_r1_api_base'),
+        "deepseek_r1_api_key": config.get("API", 'deepseek_r1_api_key'),
+        "deepseek_r1_version": config.get("API", 'deepseek_r1_version'),
     }
 
 
@@ -549,12 +545,7 @@ def get_db_ids():
         'tpch',
         'tpcds',
         "job",
-        # 'csail_stata_cinder',
-        # 'csail_stata_glance',
-        # 'csail_stata_neutron',
-        # 'csail_stata_nova',
         'dw',
-        # 'keystone'
     ]
 
 

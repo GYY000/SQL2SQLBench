@@ -26,14 +26,6 @@ class LLMModel:
                                        base_url=self.api_base)
             self.trans_func = self.openai_gpt
 
-        if "moonshot" in self.model_id:
-            self.api_key = api_key
-            self.api_base = api_base
-            openai.api_base = self.api_base
-            self.model = openai.OpenAI(api_key=self.api_key,
-                                       base_url=self.api_base)
-            self.trans_func = self.openai_moonshot
-
         if "deepseek" in self.model_id:
             self.api_key = api_key
             self.api_base = api_base
@@ -42,13 +34,6 @@ class LLMModel:
                                        base_url=self.api_base)
             self.trans_func = self.openai_deepseek
 
-        elif self.model_id == "llama3.1":
-            self.model = api_base
-            self.trans_func = self.llama3
-
-        elif self.model_id == "llama3.2":
-            self.model = api_base
-            self.trans_func = self.llama3
         elif 'Qwen' in self.model_id:
             self.api_key = api_key
             self.api_base = api_base
@@ -112,7 +97,6 @@ class LLMModel:
         )
         return completion.choices[0].message.content
 
-
     def openai_qwen(self, history: list, sys_prompt, user_prompt):
         if sys_prompt is not None:
             messages = [{"role": "system", "content": sys_prompt}]
@@ -122,20 +106,14 @@ class LLMModel:
         for message in history:
             messages.append(message)
 
-        if self.model_id == "Qwen3-Coder-30B":
-            model_id = '/root/.cache/huggingface/Qwen3-30B'
-        else:
-            model_id = '/root/.cache/huggingface/Qwen3-30B-A3B'
-
         messages.append({"role": "user", "content": user_prompt})
 
-        # --- 修改核心部分 ---
         response = self.model.chat.completions.create(
-            model=model_id,
+            model=self.model_id,
             messages=messages,
             temperature=0,
             timeout=600,
-            stream=True  # 1. 开启流式传输
+            stream=True
         )
 
         full_response = ""
@@ -144,7 +122,6 @@ class LLMModel:
                 content = chunk.choices[0].delta.content
                 full_response += content
         return full_response
-
 
     def openai_gpt_v1(self, history: [], sys_prompt, user_prompt):
         # https://platform.openai.com/docs/models
@@ -176,10 +153,10 @@ class LLMModel:
 
         client = openai.OpenAI(
             base_url=self.model,
-            api_key="EMPTY"  # 因为我们不使用认证，所以设为 "EMPTY"
+            api_key="EMPTY"
         )
         completion = client.chat.completions.create(
-            model="llama-3-8B",  # 这个名称是你通过 --served-model-name 设置的
+            model="llama-3-8B",
             messages=messages,
             max_tokens=10000,
             temperature=0

@@ -13,71 +13,50 @@ from utils.tools import load_config
 config = load_config()
 dbg = config['dbg']
 
-gpt_api_base = config['gpt_api_base']
-gpt_api_key = config['gpt_api_key']
-llama_3_1_api_base = config['llama3.1_api_base']
-moonshot_api_base = config['moonshot_api_base']
-moonshot_api_key = config['moonshot_api_key']
-volcano_api_base = config['volcano_api_base']
-volcano_api_key = config['volcano_api_key']
-bailian_api_base = config['bailian_api_base']
-bailian_api_key = config['bailian_api_key']
-deepseek_api_base = config['deepseek_api_base']
-deepseek_api_key = config['deepseek_api_key']
-paratera_api_base = config['paratera_api_base']
-paratera_api_key = config['paratera_api_key']
+deepseek_v3_version = config['deepseek_v3_version']
+deepseek_v3_api_base = config['deepseek_v3_api_base']
+deepseek_v3_api_key = config['deepseek_v3_api_key']
+deepseek_r1_version = config['deepseek_r1_version']
+deepseek_r1_api_base = config['deepseek_r1_api_base']
+deepseek_r1_api_key = config['deepseek_r1_api_key']
+qwen3_coder_api_base = config['qwen3_coder_api_base']
+qwen3_coder_id = config['qwen3_coder_id']
 qwen3_api_base = config['qwen3_api_base']
+qwen3_id = config['qwen3_id']
 
 
 def init_model(model_id):
     model = None
+    #
+    # if "gpt-" in model_id:  # gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-4.1
+    #     openai_conf = {"temperature": 0}
+    #     api_base = gpt_api_base
+    #     api_key = gpt_api_key
+    #     model = LLMModel(model_id, openai_conf)
+    #     model.load_model(api_base, api_key)
 
-    if "gpt-" in model_id:  # gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-4.1
-        openai_conf = {"temperature": 0}
-        api_base = gpt_api_base
-        api_key = gpt_api_key
-        model = LLMModel(model_id, openai_conf)
-        model.load_model(api_base, api_key)
-
-    elif "moonshot" in model_id:
-        api_base = moonshot_api_base
-        api_key = moonshot_api_key
-        model = LLMModel(model_id)
-        model.load_model(api_base, api_key)
-
-    elif model_id == "llama3.1":
-        api_base = llama_3_1_api_base
-        model = LLMModel(model_id)
-        model.load_model(api_base)
-
-    elif model_id == "deepseek-r1-distill-llama-70b":
-        api_base = bailian_api_base
-        api_key = bailian_api_key
-        model = LLMModel(model_id)
-        model.load_model(api_base, api_key)
-
-    elif model_id == 'deepseek-r1':
-        api_base = volcano_api_base
-        api_key = volcano_api_key
-        model = LLMModel('deepseek-r1-250528')
+    if model_id == 'deepseek-r1':
+        api_base = deepseek_r1_api_base
+        api_key = deepseek_r1_api_key
+        model = LLMModel(deepseek_r1_version)
         model.load_model(api_base, api_key)
 
     elif model_id == 'deepseek-v3':
-        api_base = volcano_api_base
-        api_key = volcano_api_key
-        model = LLMModel('deepseek-v3-250324')
+        api_base = deepseek_v3_api_base
+        api_key = deepseek_v3_api_key
+        model = LLMModel(deepseek_v3_version)
         model.load_model(api_base, api_key)
 
-    elif model_id == 'DeepSeek-V3.2':
-        api_base = paratera_api_base
-        api_key = paratera_api_key
-        model = LLMModel(model_id)
+    elif model_id == 'Qwen3-Coder-30B':
+        api_base = qwen3_coder_api_base
+        api_key = "EMPTY"
+        model = LLMModel(qwen3_coder_id)
         model.load_model(api_base, api_key)
 
-    elif 'Qwen3' in model_id:
+    elif model_id == 'Qwen3-30B':
         api_base = qwen3_api_base
         api_key = "EMPTY"
-        model = LLMModel(model_id)
+        model = LLMModel(qwen3_id)
         model.load_model(api_base, api_key)
     else:
         raise ValueError(f"Model {model_id} not supported!")
@@ -85,16 +64,7 @@ def init_model(model_id):
 
 
 def parse_llm_answer(model_id, answer_raw, pattern):
-    if "gpt-" in model_id:
-        answer = answer_raw
-    elif "llama" in model_id:
-        answer = answer_raw
-    elif "moonshot" in model_id:
-        answer = answer_raw
-    elif 'deepseek' in model_id:
-        answer = answer_raw
-    else:
-        answer = answer_raw
+    answer = answer_raw
     try:
         match = re.search(pattern, answer, re.DOTALL)
         if match:
@@ -116,4 +86,3 @@ def parse_llm_answer(model_id, answer_raw, pattern):
     except Exception as e:
         traceback.print_exc()
         return str(e)
-

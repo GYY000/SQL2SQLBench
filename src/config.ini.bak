@@ -1,0 +1,71 @@
+[MODE]
+dbg = [Boolean] Enable/Disable debug mode
+cloud_mode = [Boolean] Enable/Disable cloud environment mode
+
+[FILE_PATH]
+data_path = [Path] Absolute or relative path to the data directory
+
+[PARAMETER]
+using_new_sql_pos = [Integer] Flag for SQL positioning logic (0 or 1)
+
+[ORACLE_CONN]
+oracle_instant_path = [Path] Path to Oracle Instant Client installation
+oracle_host = [String] Oracle database server IP or hostname
+oracle_port = [Integer] Port number for Oracle connection
+oracle_user = [String] Database username
+usr_default_pwd = [String] Default user password
+oracle_sys_user = [String] System administrator username
+oracle_sys_pwd = [String] System administrator password
+oracle_sid = [String] Oracle System Identifier (SID)
+db_name = [String] Target database name
+
+[DB_LIMIT]
+max_len_oracle_sql = [Integer] Maximum character length for Oracle queries
+max_len_mysql_sql = [Integer] Maximum character length for MySQL queries
+max_len_pg_sql = [Integer] Maximum character length for PostgreSQL queries
+
+[MYSQL_CONN]
+mysql_host = [String] MySQL server IP or hostname
+mysql_port = [Integer] Port number for MySQL connection
+mysql_user = [String] MySQL username
+mysql_pwd = [String] MySQL password
+db_name = [String] Target database name
+
+[PG_CONN]
+pg_host = [String] PostgreSQL server IP or hostname
+pg_port = [Integer] Port number for PostgreSQL connection
+pg_user = [String] PostgreSQL username
+pg_pwd = [String] PostgreSQL password
+db_name = [String] Target database name
+
+[SQLSERVER_CONN]
+sqlserver_host = [String] SQL Server IP or hostname
+sqlserver_port = [Integer] Port number for SQL Server connection
+sqlserver_user = [String] SQL Server username
+sqlserver_pwd = [String] SQL Server password
+db_name = [String] Target database name
+
+[SNOWFLAKE_CONN]
+snowflake_account = [String] Snowflake account identifier
+snowflake_user = [String] Snowflake username
+snowflake_pwd = [String] Snowflake password
+snowflake_role = [String] Default role for the session
+snowflake_schema = [String] Default schema for the session
+db_name = [String] Target database name
+
+[API]
+# --- Qwen Model Configurations ---
+qwen3_coder_id = [Path/ID] Local path or identifier for Qwen Coder model
+qwen3_coder_api_base = [URL] Base API endpoint for Qwen Coder service
+qwen3_id = [Path/ID] Local path or identifier for Qwen model
+qwen3_api_base = [URL] Base API endpoint for Qwen service
+
+# --- DeepSeek V3 Configurations ---
+deepseek_v3_api_base = [URL] Base API endpoint for DeepSeek V3
+deepseek_v3_api_key = [String] Authentication key for DeepSeek V3
+deepseek_v3_version = [String] Specific model version string
+
+# --- DeepSeek R1 Configurations ---
+deepseek_r1_api_base = [URL] Base API endpoint for DeepSeek R1
+deepseek_r1_api_key = [String] Authentication key for DeepSeek R1
+deepseek_r1_version = [String] Specific model version string
