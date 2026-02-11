@@ -164,6 +164,7 @@ verify_sql(sql, sql2, None, database_id, database_param, dialect, tables, order_
 - `conv_point/`: The collected translation points.
 - `sql/`: The collected real-world SQL queries.
 - `exp_data/`: The experiment data.
+- `exp_scripts/`: The script to produce data and reproduce our experiment.
 - `src/`: The source code of *SQL2SQLBench*.
   - `antlr_parser`: The antlr parser and their syntax definition file used by *SQL2SQLBench*.
   - `db_builder`: The building script of the database employed in the *SQL2SQLBench*.

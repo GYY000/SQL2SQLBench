@@ -8,8 +8,7 @@ from typing import Any, Iterable, Tuple
 from dspy import Evaluate
 from tqdm import tqdm
 
-from exp_script.param_script import fetch_db_param
-from transpiler.transpile import create_stmt_fetch
+from transpiler.tool import fetch_db_param, create_stmt_fetch
 from utils.ExecutionEnv import ExecutionEnv
 from utils.db_connector import sql_execute
 from utils.tools import get_all_db_name, get_proj_root_path
@@ -90,129 +89,130 @@ def combined_metric(example, pred, trace=None):
 from dspy.teleprompt import BootstrapFewShot, BootstrapFewShotWithRandomSearch
 
 
-type_mapping_table = {
-    "mysql": {
-        "pg": {
-            "YEAR": "SMALLINT",
-            "POINT": "GEOGRAPHY",
-            "BLOB": "BYTEA"
-        },
-        "oracle": {
-            "YEAR": "NUMBER(4)",
-            "POINT": "SDO_GEOMETRY",
-            "BOOL": "NUMBER(1)"
-        },
-    },
-    "pg": {
+def train_dspy():
+    type_mapping_table = {
         "mysql": {
-            "UUID": "CHAR(36)",
-            "GEOGRAPHY": "POINT",
-            "JSONB": "JSON",
-            "XML": "TEXT",
-            "ARRAY": "JSON",
-        },
-        "oracle": {
-            "UUID": "CHAR(36)",
-            "GEOGRAPHY": "SDO_GEOMETRY",
-            "JSONB": "JSON",
-            "XML": "XMLType",
-            "ARRAY": "VARRAY",
-            "BOOL": "NUMBER(1)"
-        }
-    },
-    "oracle": {
-        "mysql": {
-            "SDO_GEOMETRY": "POINT",
-            "XMLType": "XML",
-            "VARRAY": "JSON",
+            "pg": {
+                "YEAR": "SMALLINT",
+                "POINT": "GEOGRAPHY",
+                "BLOB": "BYTEA"
+            },
+            "oracle": {
+                "YEAR": "NUMBER(4)",
+                "POINT": "SDO_GEOMETRY",
+                "BOOL": "NUMBER(1)"
+            },
         },
         "pg": {
-            "SDO_GEOMETRY": "GEOGRAPHY",
-            "XMLType": "XML",
-            "VARRAY": "ARRAY"
+            "mysql": {
+                "UUID": "CHAR(36)",
+                "GEOGRAPHY": "POINT",
+                "JSONB": "JSON",
+                "XML": "TEXT",
+                "ARRAY": "JSON",
+            },
+            "oracle": {
+                "UUID": "CHAR(36)",
+                "GEOGRAPHY": "SDO_GEOMETRY",
+                "JSONB": "JSON",
+                "XML": "XMLType",
+                "ARRAY": "VARRAY",
+                "BOOL": "NUMBER(1)"
+            }
         },
-        "snowflake": {
-            "SDO_GEOMETRY": "GEOGRAPHY",
-            "XMLType": "VARIANT",
-            "VARRAY": "ARRAY",
-        },
-        "sqlserver": {
-            "SDO_GEOMETRY": "GEOGRAPHY",
-            "XMLType": "XML",
-            "VARRAY": "NVARCHAR(MAX)",
+        "oracle": {
+            "mysql": {
+                "SDO_GEOMETRY": "POINT",
+                "XMLType": "XML",
+                "VARRAY": "JSON",
+            },
+            "pg": {
+                "SDO_GEOMETRY": "GEOGRAPHY",
+                "XMLType": "XML",
+                "VARRAY": "ARRAY"
+            },
+            "snowflake": {
+                "SDO_GEOMETRY": "GEOGRAPHY",
+                "XMLType": "VARIANT",
+                "VARRAY": "ARRAY",
+            },
+            "sqlserver": {
+                "SDO_GEOMETRY": "GEOGRAPHY",
+                "XMLType": "XML",
+                "VARRAY": "NVARCHAR(MAX)",
+            }
         }
     }
-}
 
-with open(f'{str(get_proj_root_path())}/src/transpiler/dspy/testset.json', 'r') as file:
-    sqls = json.load(file)
-all_examples = []
-for sql in tqdm(sqls):
-    src_dialect = None
-    tgt_dialect = None
-    model_dialect_map = {
-        "pg": "PostgreSQL",
-        "mysql": "MySQL",
-        "oracle": "Oracle",
-        'sqlserver': "SQL Server",
-        "snowflake": "Snowflake"
-    }
-    for key, value in sql.items():
-        if src_dialect is None:
-            src_dialect = key
-        elif tgt_dialect is None:
-            tgt_dialect = key
-    db_param = {
-        src_dialect: {},
-        tgt_dialect: {}
-    }
-    for point1 in sql['points']:
-        point_db_param = fetch_db_param(point1['point'], src_dialect, tgt_dialect)
-        for key, value in point_db_param.items():
-            db_param.update({key: value})
-    all_examples.append(
-        dspy.Example(
-            source_dialect=src_dialect,
-            target_dialect=tgt_dialect,
-            source_sql=sql[src_dialect],
-            schema_info='\n'.join(create_stmt_fetch(sql['tables'], src_dialect)),
-            db_param=db_param,
-            target_sql=sql[tgt_dialect],
-            type_mapping=json.dumps(type_mapping_table[src_dialect][tgt_dialect], indent=2),
-        ).with_inputs('source_dialect', 'target_dialect', 'source_sql', 'schema_info', 'db_param', 'type_mapping')
+    with open(f'{str(get_proj_root_path())}/src/transpiler/dspy/testset.json', 'r') as file:
+        sqls = json.load(file)
+    all_examples = []
+    for sql in tqdm(sqls):
+        src_dialect = None
+        tgt_dialect = None
+        model_dialect_map = {
+            "pg": "PostgreSQL",
+            "mysql": "MySQL",
+            "oracle": "Oracle",
+            'sqlserver': "SQL Server",
+            "snowflake": "Snowflake"
+        }
+        for key, value in sql.items():
+            if src_dialect is None:
+                src_dialect = key
+            elif tgt_dialect is None:
+                tgt_dialect = key
+        db_param = {
+            src_dialect: {},
+            tgt_dialect: {}
+        }
+        for point1 in sql['points']:
+            point_db_param = fetch_db_param(point1['point'], src_dialect, tgt_dialect)
+            for key, value in point_db_param.items():
+                db_param.update({key: value})
+        all_examples.append(
+            dspy.Example(
+                source_dialect=src_dialect,
+                target_dialect=tgt_dialect,
+                source_sql=sql[src_dialect],
+                schema_info='\n'.join(create_stmt_fetch(sql['tables'], src_dialect)),
+                db_param=db_param,
+                target_sql=sql[tgt_dialect],
+                type_mapping=json.dumps(type_mapping_table[src_dialect][tgt_dialect], indent=2),
+            ).with_inputs('source_dialect', 'target_dialect', 'source_sql', 'schema_info', 'db_param', 'type_mapping')
+        )
+
+    random.seed(42)  # 固定随机种子以便复现
+    random.shuffle(all_examples)
+    trainset = all_examples[:100]
+    devset = all_examples[100:]
+
+    import dspy
+
+    lm = dspy.LM(
+        "openai/deepseek-r1-250528",  # 这里的前缀 openai/ 代表“OpenAI-compatible”
+        api_base="Your api base",
+        api_key="Your api key",  # 内网不需要就填 ""
+        model_type="chat",  # 通常用 chat
+    )
+    dspy.configure(lm=lm)
+
+    optimizer = BootstrapFewShotWithRandomSearch(
+        metric=combined_metric,
+        max_bootstrapped_demos=3,
+        max_labeled_demos=3,
+        num_candidate_programs=6,
+        num_threads=4
     )
 
-random.seed(42) # 固定随机种子以便复现
-random.shuffle(all_examples)
-trainset = all_examples[:100]
-devset = all_examples[100:]
+    dspy.settings.configure(show_progress=True)
 
-import dspy
+    compiled_sql_translator = optimizer.compile(SQLTranslator(), trainset=trainset)
 
-lm = dspy.LM(
-    "openai/deepseek-r1-250528",         # 这里的前缀 openai/ 代表“OpenAI-compatible”
-    api_base="Your api base",
-    api_key="Your api key",               # 内网不需要就填 ""
-    model_type="chat",                # 通常用 chat
-)
-dspy.configure(lm=lm)
+    file_path = f"{str(get_proj_root_path())}/src/transpiler/dspy/compiled_sql_translator.json"
+    compiled_sql_translator.save(file_path)
 
-optimizer = BootstrapFewShotWithRandomSearch(
-    metric=combined_metric,
-    max_bootstrapped_demos=3,
-    max_labeled_demos=3,
-    num_candidate_programs=6,
-    num_threads=4
-)
-
-dspy.settings.configure(show_progress=True)
-
-compiled_sql_translator = optimizer.compile(SQLTranslator(), trainset=trainset)
-
-file_path = f"{str(get_proj_root_path())}/src/transpiler/dspy/compiled_sql_translator.json"
-compiled_sql_translator.save(file_path)
-
-print(f"Model have been saved to {file_path}")
+    print(f"Model have been saved to {file_path}")
 
 
 def generate_report(program, train_data, dev_data, name="Model"):
@@ -227,5 +227,5 @@ def generate_report(program, train_data, dev_data, name="Model"):
     print(f"Dev Acc: {dev_acc}%")
     return train_acc, dev_acc
 
-generate_report(SQLTranslator(), trainset, devset, name="Zero-Shot")
-generate_report(compiled_sql_translator, trainset, devset, name="Few-Shot Optimized")
+# generate_report(SQLTranslator(), trainset, devset, name="Zero-Shot")
+# generate_report(compiled_sql_translator, trainset, devset, name="Few-Shot Optimized")

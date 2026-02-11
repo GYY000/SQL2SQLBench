@@ -17,6 +17,7 @@ from transpiler.dspy.dspy_impl import SQLTranslator
 from transpiler.model_prompt import LLM_REWRITE_SYS_PROMPT, LLM_REWRITE_USER_PROMPT, LLM_FEED_BACK_SYS_PROMPT, \
     LLM_FEED_BACK_USER_PROMPT, DB_PARAM_SYS_PROMPT, DB_PARAM_USER_PROMPT, TYPE_MAPPING_SYS_PROMPT, \
     TYPE_MAPPING_USER_PROMPT, TRAN_HISTORY_SYS_PROMPT, TRAN_HISTORY_USER_PROMPT
+from transpiler.tool import create_stmt_fetch
 from utils.db_connector import sql_dependent_execute
 from utils.tools import get_proj_root_path, load_config, get_all_db_name, get_db_ids
 from verification.verify import post_process_for_reserved_keyword
@@ -424,20 +425,6 @@ def translate_dspy(sql: dict, src_dialect: str, tgt_dialect: str, db_param: dict
     )
 
     return prediction.target_sql
-
-
-def create_stmt_fetch(tables: list[str], dialect: str):
-    # fetch the sub-graph in db
-    db_ids = get_db_ids()
-    create_statements = []
-    for db_id in db_ids:
-        schema, add_constraints, type_defs = schema_build(db_id, dialect)
-        for table in tables:
-            if table in schema:
-                create_table_stmt = create_table(schema[table], add_constraints[table], dialect)
-                create_statements.append(create_table_stmt)
-                create_statements = create_statements + type_defs[table]
-    return create_statements
 
 
 def cracksql_translate(sql: str, src_dialect: str, tgt_dialect: str, db_name,

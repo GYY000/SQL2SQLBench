@@ -63,7 +63,7 @@ def get_db_name(dialect, db_name):
                 return db_name
             elif db_name == get_empty_db_name(db_id):
                 return db_name
-        assert False
+        return db_name
     else:
         return database_mapping[db_name]
 
