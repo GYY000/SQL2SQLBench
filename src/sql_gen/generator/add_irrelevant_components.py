@@ -10,6 +10,7 @@ import random
 from antlr_parser.Tree import TreeNode
 from antlr_parser.parse_tree import parse_tree
 from sql_gen.generator.ele_type.type_conversion import type_mapping
+from sql_gen.generator.generate_pipeline import load_no_point_sqls
 from sql_gen.generator.method import merge_query
 from sql_gen.generator.point_loader import load_point_by_name
 from sql_gen.generator.point_parser import parse_point
@@ -17,34 +18,6 @@ from sql_gen.generator.rewriter import rewrite_sql
 from sql_gen.generator.token_statistic import stat_tokens
 from utils.ExecutionEnv import ExecutionEnv
 from utils.tools import get_db_ids, get_proj_root_path, get_all_db_name
-
-
-def fetch_no_points_sqls(src_dialect, tgt_dialect):
-    db_ids = get_db_ids()
-    all_sqls = []
-    for db in db_ids:
-        sql_root_path = os.path.join(get_proj_root_path(), 'SQL', db)
-        if os.path.exists(os.path.join(sql_root_path, 'no_points')):
-            path1 = os.path.join(sql_root_path, 'no_points', f'{src_dialect}_{tgt_dialect}.json')
-            path2 = os.path.join(sql_root_path, 'no_points', f'{tgt_dialect}_{src_dialect}.json')
-            if os.path.exists(path1):
-                with open(path1, 'r') as file:
-                    sqls = json.load(file)
-            elif os.path.exists(path2):
-                with open(path2, 'r') as file:
-                    sqls = json.load(file)
-            else:
-                assert False
-            assert sqls is not None
-            for sql in sqls:
-                if 'points' in sql:
-                    if len(sql['points']) > 0:
-                        print(path1)
-                        print(path2)
-                        print(sql)
-                point_list = sql.get('points', [])
-                all_sqls.append(sql)
-    return all_sqls
 
 
 def union_query(sql1: str, sql2: str, src_dialect: str):
@@ -74,17 +47,7 @@ def add_irrelevant_sql(sql1: dict, src_dialect: str, tgt_dialect: str, to_add_to
                     flag2 = tgt_execute_env.add_param(key, value)
                     if not flag1 or not flag2:
                         return None
-    # src_root_node, _, _, _ = parse_tree(sql1[src_dialect].strip(';'), src_dialect)
-    # src_root_node = TreeNode.make_g4_tree_by_node(src_root_node, src_dialect)
-    # tgt_root_node, _, _, _ = parse_tree(sql1[tgt_dialect].strip(';'), tgt_dialect)
-    # tgt_root_node = TreeNode.make_g4_tree_by_node(tgt_root_node, tgt_dialect)
-    # flag, src_ctes = analysis_ctes(src_root_node, src_dialect)
-    # flag, tgt_ctes = analysis_ctes(tgt_root_node, tgt_dialect)
-    # src_with_clause = build_ctes(src_ctes, src_dialect)
-    # src_query_body = str(src_root_node)
-    # tgt_with_clause = build_ctes(tgt_ctes, tgt_dialect)
-    # tgt_query_body = str(tgt_root_node)
-    fetch_no_point_sql = fetch_no_points_sqls(src_dialect, tgt_dialect)
+    fetch_no_point_sql = load_no_point_sqls(src_dialect, tgt_dialect)
     flag, res = src_execute_env.fetch_type(sql1[src_dialect].strip(';'))
     sql1_types = [type_mapping(src_dialect, t['type']) for t in res]
     retry_time = 8

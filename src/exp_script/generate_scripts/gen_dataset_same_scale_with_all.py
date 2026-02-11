@@ -86,17 +86,16 @@ def generate_same_scale_with_all(sql_number, output_path):
     pbar.update(len(res))
     while k < len(all_weight):
         while i < regions[k]:
-            weights = [116, 102]
-            # weights = [116, 67, 102, 107, 110, 95, 50, 40]
+            weights = [116, 67, 102, 107, 110, 95, 50, 40]
             dialects = {
                 1: {"Src": "mysql", "Tgt": "pg"},
-                # 2: {"Src": "mysql", "Tgt": "oracle"},
+                2: {"Src": "mysql", "Tgt": "oracle"},
                 2: {"Src": "pg", "Tgt": "mysql"},
-                # 4: {"Src": "pg", "Tgt": "oracle"},
-                # 5: {"Src": "oracle", "Tgt": "mysql"},
-                # 6: {"Src": "oracle", "Tgt": "pg"},
-                # 7: {"Src": "oracle", "Tgt": "snowflake"},
-                # 8: {"Src": "oracle", "Tgt": "sqlserver"},
+                4: {"Src": "pg", "Tgt": "oracle"},
+                5: {"Src": "oracle", "Tgt": "mysql"},
+                6: {"Src": "oracle", "Tgt": "pg"},
+                7: {"Src": "oracle", "Tgt": "snowflake"},
+                8: {"Src": "oracle", "Tgt": "sqlserver"},
             }
             keys = list(dialects.keys())
             selected_key = random.choices(keys, weights=weights, k=1)[0]
@@ -107,57 +106,6 @@ def generate_same_scale_with_all(sql_number, output_path):
                 src_dialect = dialect_pair_id['Src']
                 tgt_dialect = dialect_pair_id['Tgt']
                 points = load_points(src_dialect, tgt_dialect)
-                if src_dialect == 'mysql':
-                    points = [
-                        "IFNULL",
-                        "FROM_DAYS",
-                        "UTC_DATE",
-                        "MAKE_DATE",
-                        "TRUNC",
-                        "LOG",
-                        "LOG2",
-                        "TO_CHAR_INT",
-                        "CAST_DOUBLE",
-                        "CAST_UNSIGNED",
-                        "#",
-                        "DIV",
-                        "<=>",
-                        "USER_R"
-                    ]
-                elif src_dialect == 'pg':
-                    points = [
-                        "NOTNULL",
-                        "TO_TIMESTAMP1",
-                        "DATE_PARA_1",
-                        "DATE_PARA_2",
-                        "SUBSTRING",
-                        "LPAD",
-                        "RPAD",
-                        "RTRIM",
-                        "LTRIM",
-                        "SINH",
-                        "COSH",
-                        "TANH",
-                        "ASINH",
-                        "ACOSH",
-                        "ATANH",
-                        "TRUNC_NUM1",
-                        "TRUNC_NUM2",
-                        "LOG",
-                        "TO_CHAR_INT1",
-                        "TO_CHAR_INT2",
-                        "WIDTH_BUCKET",
-                        "DIV",
-                        "TYPE_CONVERSION",
-                        "::NUMERIC",
-                        "|/",
-                        "EXP",
-                        "||/",
-                        "@",
-                        "#",
-                        "||",
-                        "MATCH_R"
-                    ]
                 point_num = random.randint(points_lower_bound[k], points_upper_bound[k])
                 point_list = []
                 for j in range(point_num):
@@ -166,7 +114,6 @@ def generate_same_scale_with_all(sql_number, output_path):
                 added_points = []
                 for p in point_list:
                     add_point_to_point_dict(added_points, p)
-                print(added_points)
                 sql_pair = generate_equivalent_sql_pair(src_dialect, tgt_dialect, added_points, only_cur_sql_mode=True)
                 if sql_pair is not None:
                     num = 0
@@ -175,7 +122,6 @@ def generate_same_scale_with_all(sql_number, output_path):
                     if not num < points_lower_bound[k]:
                         break
             if sql_pair is not None:
-                print(sql_pair)
                 res.append(sql_pair)
                 i += 1
                 pbar.update(1)
