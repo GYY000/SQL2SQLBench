@@ -394,15 +394,17 @@ def ora2pg_tran(sql: str, src_dialect: str, tgt_dialect: str, db_name, ora_id: s
 
 import dspy
 
+config = load_config()
+
 lm = dspy.LM(
     "openai/deepseek-r1-250528",
-    api_base="https://ark.cn-beijing.volces.com/api/v3",
-    api_key="4d35816f-a4b0-4d97-af9a-b287eeac6849",
+    api_base=config['deepseek_r1_api_base'],
+    api_key=config['deepseek_r1_api_key'],
     model_type="chat",
 )
 dspy.configure(lm=lm)
 translator = SQLTranslator()
-file_path = "/home/gyy/SQL2SQL_Bench/src/transpiler/dspy/compiled_sql_translator.json"
+file_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'dspy', 'compiled_sql_translator.json')
 translator.load(file_path)
 
 

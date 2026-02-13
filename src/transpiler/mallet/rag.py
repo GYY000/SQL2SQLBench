@@ -8,6 +8,7 @@ import os.path
 import random
 import re
 
+from litellm.proxy.proxy_server import file_path
 from tqdm import tqdm
 
 from exp_script.param_script import fetch_db_param
@@ -21,7 +22,7 @@ from sql_gen.generator.point_parser import parse_point
 from sql_gen.generator.rewriter import rewrite_sql
 from transpiler.mallet.prompt import sys_prompt, user_prompt
 from utils.db_connector import sql_execute
-from utils.tools import get_all_db_name
+from utils.tools import get_all_db_name, get_proj_root_path
 from verification.verify import tol_order_unaware_compare
 
 documents = {}
@@ -29,11 +30,11 @@ documents = {}
 
 def load_function_name_desc_pair_list(dialect: str):
     if dialect == 'mysql':
-        file_path = '/home/gyy/SQL2SQL_Bench/src/transpiler/mallet/mysql_8_kb.json'
+        file_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'mallet', 'mysql_8_kb.json')
     elif dialect == 'oracle':
-        file_path = '/home/gyy/SQL2SQL_Bench/src/transpiler/mallet/oracle_11_kb.json'
+        file_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'mallet', 'oracle_11_kb.json')
     elif dialect == 'pg':
-        file_path = '/home/gyy/SQL2SQL_Bench/src/transpiler/mallet/pg_14_kb.json'
+        file_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'mallet', 'pg_14_kb.json')
     else:
         assert False
     with open(file_path, 'r') as json_file:
@@ -156,8 +157,8 @@ def extract_json_from_string(text):
 
 
 def try_gen_rules(src_dialect, tgt_dialect, db_param, sql, error_info):
-    similar_info = fetch_similar_tgt_function(src_dialect, sql, tgt_dialect,
-                                              '/home/gyy/SQL2SQL_Bench/src/transpiler/cracksql_driver/all-MiniLM-L6-v2')
+    embedding_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'cracksql_driver', 'all-MiniLM-L6-v2')
+    similar_info = fetch_similar_tgt_function(src_dialect, sql, tgt_dialect, embedding_path)
     ref_func_descriptions = ''
     for item in similar_info:
         ref_func_descriptions += f"  - {item['name']}: `{item['desc']}`\n"
@@ -204,12 +205,11 @@ def try_gen_rules(src_dialect, tgt_dialect, db_param, sql, error_info):
 
 
 def upload_new_rules(rules: list, src_dialect: str, tgt_dialect: str):
-    with open(f'/home/gyy/SQL2SQL_Bench/src/transpiler/mallet/generated_rules/{src_dialect}_{tgt_dialect}_point.json',
-              'r') as f:
+    rules_path = os.path.join(get_proj_root_path(), f'src/transpiler/mallet/generated_rules/{src_dialect}_{tgt_dialect}_point.json')
+    with open(rules_path, 'r') as f:
         data = json.load(f)
     data = data + rules
-    with open(f'/home/gyy/SQL2SQL_Bench/src/transpiler/mallet/generated_rules/{src_dialect}_{tgt_dialect}_point.json',
-              'w') as f:
+    with open(rules_path, 'w') as f:
         json.dump(data, f, indent=2)
 
 
@@ -319,7 +319,7 @@ def transpile_mallet(sql_dict: dict, frozen: bool, retry_time=3):
     return cur_sql
 
 
-def pre_rule_generation():
+def pre_rule_generation(rules_gen_path):
     dialects = ['mysql', 'pg', 'oracle']
     for src_dialect in dialects:
         for tgt_dialect in dialects:
@@ -329,21 +329,10 @@ def pre_rule_generation():
                 continue
             if not (src_dialect == 'pg' or tgt_dialect == 'pg'):
                 continue
-            with open(
-                    f'/home/gyy/SQL2SQL_Bench/dataset/individual/all_{src_dialect}_{tgt_dialect}_dataset_exp_res.json',
-                    'r') as f:
+            with open(rules_gen_path, 'r') as f:
                 sqls = json.load(f)
             for sql in tqdm(sqls):
-                if sql['Type'] == 'EXPRESSION' and sql["SrcPattern"] != '' and sql['SQL'] is not None:
-                    try:
-                        transpile_mallet(sql, False)
-                    except Exception as e:
-                        print(e)
-
-# model_path = '/home/gyy/SQL2SQL_Bench/src/transpiler/cracksql_driver/all-MiniLM-L6-v2'
-# run_one('oracle', 'pg', model_path)
-#
-# desc = """
-# DAYOFWEEK( date ) Returns the weekday index for date ( 1 = Sunday, 2 = Monday, …, 7 = Saturday). These index values correspond to the ODBC standard. Returns NULL if date is NULL . mysql> SELECT DAYOFWEEK('2007-02-03'); -> 7
-# """
-# gen_func_point('DAYOFWEEK', desc, 'MySQL', 'PostgreSQL')
+                try:
+                    transpile_mallet(sql, False)
+                except Exception as e:
+                    print(e)

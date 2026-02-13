@@ -1011,11 +1011,20 @@ def build_insert(db_name: str, dialect: str, schema: dict, all_flag: bool = True
                         return False
     return True
 
+# accelerate the process
+schema_dict = {}
+add_constraints_dict = {}
+type_defs_dict = {}
 
 def schema_build(db_name, dialect):
-    with open(os.path.join(get_data_path(), db_name, 'schema.json'), 'r') as file:
-        schema = json.loads(file.read())
-
+    if db_name in schema_dict:
+        schema = schema_dict[db_name]
+        add_constraints = add_constraints_dict[db_name]
+        type_defs = type_defs_dict[db_name]
+        return schema, add_constraints, type_defs
+    else:
+        with open(os.path.join(get_data_path(), db_name, 'schema.json'), 'r') as file:
+            schema = json.loads(file.read())
     add_constraints = {}
     type_defs = {}
     for table_name, value in schema.items():
@@ -1028,6 +1037,9 @@ def schema_build(db_name, dialect):
             if add_constraint is not None:
                 add_constraints[table_name].append(add_constraint)
             type_defs[table_name] = type_defs[table_name] + col_type_defs
+    schema_dict[db_name] = schema
+    add_constraints_dict[db_name] = add_constraints
+    type_defs_dict[db_name] = type_defs
     return schema, add_constraints, type_defs
 
 

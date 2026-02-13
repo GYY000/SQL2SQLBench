@@ -98,11 +98,14 @@ def parse_rule(rule: dict, dialect) -> Point:
 
 
 def rewrite_dialect_specific_func(sql: str | TreeNode, dialect):
-    with open(os.path.join(get_proj_root_path(), 'src', 'verification', 'rewritten_rules', f'{dialect}.json'),
-              'r') as f:
-        rewritten_rules = json.load(f)
-    points = []
-    for rule in rewritten_rules:
-        points.append(parse_rule(rule, dialect))
-    rewrite_res, _, _ = rewrite_sql(dialect, dialect, sql, points)
-    return rewrite_res
+    if os.path.exists(os.path.join(get_proj_root_path(), 'src', 'verification', 'rewritten_rules', f'{dialect}.json')):
+        with open(os.path.join(get_proj_root_path(), 'src', 'verification', 'rewritten_rules', f'{dialect}.json'),
+                  'r') as f:
+            rewritten_rules = json.load(f)
+        points = []
+        for rule in rewritten_rules:
+            points.append(parse_rule(rule, dialect))
+        rewrite_res, _, _ = rewrite_sql(dialect, dialect, sql, points)
+        return rewrite_res
+    else:
+        return sql
