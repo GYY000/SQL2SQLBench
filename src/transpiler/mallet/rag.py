@@ -5,15 +5,12 @@
 # @Time: 2024/12/29 11:41
 import json
 import os.path
-import random
 import re
 
-from litellm.proxy.proxy_server import file_path
 from tqdm import tqdm
 
 from exp_script.param_script import fetch_db_param
 from model.model_init import init_model
-from point_gen.prompt import sys_prompt_bat, user_prompt_bat
 import chromadb
 from chromadb.utils import embedding_functions
 

@@ -245,13 +245,15 @@ def tran_query(point, number, cracksql_flag):
 
 
 def leave_out_exp_res(exp_res, src_dialect, tgt_dialect):
-    if tgt_dialect not in ['sqlserver', 'snowflake'] and 'cracksql' not in exp_res :
+    if tgt_dialect not in ['sqlserver', 'snowflake'] and 'cracksql' not in exp_res:
         return True
     elif tgt_dialect == 'pg' and 'ora2pg' not in exp_res:
         return True
     elif tgt_dialect == 'snowflake' and 'sqlines' not in exp_res:
         return True
-    elif 'Deepseek-v3' not in exp_res or 'DS' not in exp_res or 'Qwen3-30B' not in exp_res or 'Qwen3-Coder-30B' not in exp_res :
+    elif 'Deepseek-v3' not in exp_res or 'DS' not in exp_res or 'Qwen3-30B' not in exp_res or 'Qwen3-Coder-30B' not in exp_res:
+        return True
+    elif 'Qwen3-30B' not in exp_res or 'Qwen3-Coder-30B' not in exp_res:
         return True
     for key in ['sqlines', 'sqlglot', 'Deepseek-v3', 'DS', 'cracksql']:
         if key not in exp_res:
